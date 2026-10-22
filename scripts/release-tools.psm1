@@ -20,10 +20,18 @@ function Write-ReleaseUtf8 {
     [System.IO.File]::WriteAllText($Path, $Text, [System.Text.UTF8Encoding]::new($false))
 }
 
+function Get-ReleaseSha256 {
+    param([Parameter(Mandatory)][string]$Path)
+    $stream = [IO.File]::OpenRead($Path)
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { return [BitConverter]::ToString($sha.ComputeHash($stream)).Replace('-', '').ToLowerInvariant() }
+    finally { $stream.Dispose(); $sha.Dispose() }
+}
+
 function Invoke-ReleaseCommand {
     param([string]$Executable, [string[]]$Arguments)
     & $Executable @Arguments | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "$Executable non riuscito (codice $LASTEXITCODE)." }
 }
 
-Export-ModuleMember -Function Get-NextAppVersion, Write-ReleaseUtf8, Invoke-ReleaseCommand
+Export-ModuleMember -Function Get-NextAppVersion, Write-ReleaseUtf8, Get-ReleaseSha256, Invoke-ReleaseCommand

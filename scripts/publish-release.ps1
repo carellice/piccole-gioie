@@ -58,7 +58,7 @@ try {
         New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
         $apkPath = Join-Path $outputDirectory 'piccole-gioie.apk'
         Copy-Item -LiteralPath $builtApk -Destination $apkPath -Force
-        $hash = (Get-FileHash -LiteralPath $apkPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        $hash = Get-ReleaseSha256 $apkPath
         $metadata = [ordered]@{ schemaVersion=1; applicationId='it.piccolegioie.app'; versionCode=$next.Code;
             versionName=$next.Name; apkName='piccole-gioie.apk'; sha256=$hash; size=(Get-Item -LiteralPath $apkPath).Length }
         Write-ReleaseUtf8 (Join-Path $outputDirectory 'piccole-gioie-update.json') ($metadata | ConvertTo-Json)
@@ -79,7 +79,7 @@ try {
     $notesPath = Join-Path $outputDirectory 'release-notes.md'
     $metadata = Get-Content -LiteralPath $metadataPath -Raw | ConvertFrom-Json
     if ($metadata.versionName -ne $next.Name -or $metadata.versionCode -ne $next.Code -or
-        $metadata.sha256 -ne (Get-FileHash -LiteralPath $apkPath -Algorithm SHA256).Hash.ToLowerInvariant() -or
+        $metadata.sha256 -ne (Get-ReleaseSha256 $apkPath) -or
         $metadata.size -ne (Get-Item -LiteralPath $apkPath).Length) { throw 'I file della release non corrispondono: pubblicazione interrotta.' }
     & git show-ref --verify --quiet "refs/tags/$tag"
     if ($LASTEXITCODE -ne 0) { Invoke-ReleaseCommand 'git' @('tag','-a',$tag,'-m',"piccole gioie $($next.Name)",$headCommit) }
@@ -99,7 +99,7 @@ try {
             foreach ($assetPath in @($apkPath,$metadataPath,$checksumPath)) {
                 $assetName = Split-Path $assetPath -Leaf
                 $remoteAsset = $published.assets | Where-Object { $_.name -eq $assetName } | Select-Object -First 1
-                $expectedDigest = 'sha256:' + (Get-FileHash -LiteralPath $assetPath -Algorithm SHA256).Hash.ToLowerInvariant()
+                $expectedDigest = 'sha256:' + (Get-ReleaseSha256 $assetPath)
                 if (-not $remoteAsset -or $remoteAsset.digest -ne $expectedDigest) { throw 'La release pubblica non corrisponde ai file locali; non viene modificata.' }
             }
             Remove-Item -LiteralPath $pendingPath

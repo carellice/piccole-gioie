@@ -12,4 +12,9 @@ foreach ($invalid in @('1.2', 'v1.2.3', '1.2.3-beta')) {
     try { Get-NextAppVersion -Name $invalid -Code 1 | Out-Null } catch { $failed = $true }
     if (-not $failed) { throw 'Versione non valida accettata.' }
 }
-Write-Host '6 controlli dello script release superati.'
+$temporaryFile = [IO.Path]::GetTempFileName()
+try {
+    Write-ReleaseUtf8 $temporaryFile 'abc'
+    if ((Get-ReleaseSha256 $temporaryFile) -ne 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad') { throw 'SHA-256 errato.' }
+} finally { Remove-Item -LiteralPath $temporaryFile }
+Write-Host '7 controlli dello script release superati.'
