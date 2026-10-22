@@ -31,8 +31,13 @@ try {
 
     if (Test-Path -LiteralPath $pendingPath) {
         $pending = Get-Content -LiteralPath $pendingPath -Raw | ConvertFrom-Json
-        $headCommit = & git rev-parse HEAD
-        if ($pending.commit -ne $headCommit) { throw 'La pubblicazione in sospeso appartiene a un altro commit. Completa quella versione prima di crearne una nuova.' }
+        & git merge-base --is-ancestor $pending.commit HEAD
+        if ($LASTEXITCODE -ne 0) { throw 'Il commit della pubblicazione in sospeso non appartiene alla cronologia corrente.' }
+        $currentVersion = ConvertFrom-StringData ([IO.File]::ReadAllText($versionPath))
+        if ($currentVersion.versionName -ne $pending.versionName -or [int]$currentVersion.versionCode -ne $pending.versionCode) {
+            throw 'La versione locale e cambiata: completa prima la pubblicazione in sospeso.'
+        }
+        $headCommit = $pending.commit
         $next = [pscustomobject]@{ Name = $pending.versionName; Code = $pending.versionCode }
         $tag = $pending.tag
         $outputDirectory = Join-Path $privateDirectory $tag
@@ -88,7 +93,9 @@ try {
     Invoke-ReleaseCommand 'git' @('push','--atomic','origin','HEAD:main',"refs/tags/${tag}:refs/tags/$tag")
     $releasesText = & gh release list --repo $repository --limit 1000 --json tagName,isDraft
     if ($LASTEXITCODE -ne 0) { throw 'Non riesco a leggere le release: rilancia lo script quando GitHub e disponibile.' }
-    $existing = @($releasesText | ConvertFrom-Json) | Where-Object { $_.tagName -eq $tag } | Select-Object -First 1
+    $releases = ConvertFrom-Json -InputObject ($releasesText -join "`n")
+    $existing = $null
+    foreach ($entry in $releases) { if ($entry.tagName -eq $tag) { $existing = $entry; break } }
     if ($existing) {
         if (-not $existing.isDraft) {
             # Se la pubblicazione era riuscita ma il processo si era interrotto subito dopo,
