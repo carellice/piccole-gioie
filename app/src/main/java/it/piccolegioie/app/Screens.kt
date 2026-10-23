@@ -57,7 +57,7 @@ fun HomeScreen(memories: List<Memory>, ready: Boolean, onAdd: () -> Unit, onFish
                 }
             }
             Spacer(Modifier.height(30.dp))
-            Eyebrow(today.format(DateTimeFormatter.ofPattern("EEEE d MMMM", Italian)), modifier = Modifier.fillMaxWidth().joyEntrance(1))
+            Eyebrow("IL TUO ${today.year}", modifier = Modifier.fillMaxWidth().joyEntrance(1))
             Spacer(Modifier.height(10.dp))
             Text("La felicità,\nun pezzetto alla volta.", modifier = Modifier.joyEntrance(1), style = DisplayStyle.copy(fontSize = 35.sp, lineHeight = 40.sp))
             Spacer(Modifier.height(9.dp))
@@ -129,7 +129,7 @@ fun ArchiveScreen(memories: List<Memory>, onOpen: (Memory) -> Unit, onAdd: () ->
             }
         }
         if (memories.any { it.date.year == year } && query.isEmpty() && !favorites) item {
-            Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Color(0xFFE9EDDF)).clickable { onYear(year) }.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(SoftSurface).clickable { onYear(year) }.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.AutoMirrored.Outlined.MenuBook, null, Modifier.size(23.dp), Forest)
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
@@ -144,8 +144,8 @@ fun ArchiveScreen(memories: List<Memory>, onOpen: (Memory) -> Unit, onAdd: () ->
                 if (query.isNotEmpty()) "Prova con un’altra parola o un altro anno." else if (favorites) "Tocca il cuore su un ricordo per tenerlo ancora più vicino." else "Il primo bigliettino è l’inizio di una bellissima collezione.",
                 Icons.Outlined.Inbox, if (query.isEmpty() && !favorites) "Scrivi il primo momento" else null, onAdd)
         }
-        filtered.groupBy { it.date.month }.forEach { (month, notes) ->
-            item(key = "month-$month") { Eyebrow("${month.getDisplayName(java.time.format.TextStyle.FULL, Italian)} · ${notes.size} ${if (notes.size == 1) "momento" else "momenti"}", modifier = Modifier.padding(top = 8.dp)) }
+        run {
+            val notes = filtered
             items(notes.chunked(2), key = { it.first().id }) { pair ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     pair.forEachIndexed { index, memory -> PaperCard(memory, { onOpen(memory) }, Modifier.weight(1f).joyEntrance(index + 1), compact = true) }
@@ -168,7 +168,7 @@ fun RitualScreen(memories: List<Memory>, reminder: Boolean, time: String, onRemi
             Text("Non servono giorni perfetti.\nBasta accorgersi di una cosa bella.", color = Muted, fontSize = 14.sp, lineHeight = 23.sp)
         }
         item {
-            Row(Modifier.fillMaxWidth().joyEntrance(1).clip(RoundedCornerShape(24.dp)).background(Color(0xFFE8ECDF)).padding(22.dp), horizontalArrangement = Arrangement.SpaceAround) {
+            Row(Modifier.fillMaxWidth().joyEntrance(1).clip(RoundedCornerShape(24.dp)).background(SoftSurface).padding(22.dp), horizontalArrangement = Arrangement.SpaceAround) {
                 listOf(Triple("${MemoryStats.streak(memories)}", "giorni di fila", Icons.Outlined.LocalFlorist),
                     Triple("${memories.size}", "momenti", Icons.Outlined.StickyNote2),
                     Triple("${memories.count { it.favorite }}", "del cuore", Icons.Outlined.FavoriteBorder)).forEach { (number, label, icon) ->
@@ -183,7 +183,7 @@ fun RitualScreen(memories: List<Memory>, reminder: Boolean, time: String, onRemi
         item {
             Eyebrow("IL TUO APPUNTAMENTO CON IL BELLO")
             Spacer(Modifier.height(12.dp))
-            Column(Modifier.joyEntrance(2).clip(RoundedCornerShape(22.dp)).background(Color.White.copy(alpha = .65f)).border(1.dp, Line, RoundedCornerShape(22.dp)).padding(18.dp)) {
+            Column(Modifier.joyEntrance(2).clip(RoundedCornerShape(22.dp)).background(SoftSurface.copy(alpha = .65f)).border(1.dp, Line, RoundedCornerShape(22.dp)).padding(18.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Outlined.NotificationsNone, null, Modifier.size(23.dp), Forest)
                     Spacer(Modifier.width(13.dp))
@@ -191,7 +191,9 @@ fun RitualScreen(memories: List<Memory>, reminder: Boolean, time: String, onRemi
                         Text("Un promemoria gentile", fontSize = 14.sp, color = Ink)
                         Text("Ogni giorno, un piccolo invito", color = Muted, fontSize = 11.sp)
                     }
-                    Switch(reminder, onReminder, modifier = Modifier.height(36.dp))
+                    Switch(reminder, onReminder, modifier = Modifier.height(36.dp), colors = SwitchDefaults.colors(
+                        uncheckedThumbColor = Forest, uncheckedTrackColor = SoftSurface, uncheckedBorderColor = Forest,
+                        checkedThumbColor = Cream, checkedTrackColor = Forest, checkedBorderColor = Forest))
                 }
                 if (reminder) {
                     HorizontalDivider(Modifier.padding(vertical = 14.dp), color = Line)
@@ -207,7 +209,7 @@ fun RitualScreen(memories: List<Memory>, reminder: Boolean, time: String, onRemi
         item {
             Eyebrow("CUSTODISCI I TUOI RICORDI")
             Spacer(Modifier.height(12.dp))
-            Column(Modifier.joyEntrance(3).clip(RoundedCornerShape(22.dp)).background(Color.White.copy(alpha = .65f)).border(1.dp, Line, RoundedCornerShape(22.dp))) {
+            Column(Modifier.joyEntrance(3).clip(RoundedCornerShape(22.dp)).background(SoftSurface.copy(alpha = .65f)).border(1.dp, Line, RoundedCornerShape(22.dp))) {
                 SettingsRow(Icons.Outlined.FileDownload, "Esporta il barattolo", "Un backup da tenere al sicuro", onExport)
                 HorizontalDivider(Modifier.padding(horizontal = 18.dp), color = Line)
                 SettingsRow(Icons.Outlined.FileUpload, "Importa i tuoi momenti", "Aggiungi i ricordi da un backup", onImport)
@@ -224,7 +226,6 @@ fun RitualScreen(memories: List<Memory>, reminder: Boolean, time: String, onRemi
         item { AppUpdateCard() }
         item {
             Text("“A volte le cose più piccole occupano\npiù spazio nel cuore.”", style = DisplayStyle.copy(fontSize = 20.sp, lineHeight = 29.sp, fontStyle = FontStyle.Italic, color = Forest.copy(alpha = .8f)), modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp), textAlign = TextAlign.Center)
-            Eyebrow("PICCOLE GIOIE · FATTO PER I GIORNI VERI", modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), color = Muted)
         }
     }
 }

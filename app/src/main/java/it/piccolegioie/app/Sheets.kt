@@ -48,16 +48,15 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WriteSheet(onDismiss: () -> Unit, onSave: (Memory, () -> Unit) -> Unit) {
-    val context = LocalContext.current
     var text by rememberSaveable { mutableStateOf("") }
-    var category by rememberSaveable { mutableStateOf(Categories.first()) }
     var color by rememberSaveable { mutableIntStateOf(0) }
-    var dateString by rememberSaveable { mutableStateOf(LocalDate.now().toString()) }
     var prompt by rememberSaveable { mutableIntStateOf(0) }
     var saving by rememberSaveable { mutableStateOf(false) }
     var discard by remember { mutableStateOf(false) }
     val prompts = listOf("Quale piccola cosa ti ha fatto sorridere oggi?", "Per cosa ti senti grato, proprio adesso?", "Chi ha reso più bella la tua giornata?", "Qual è un momento che vorresti tenere vicino?")
-    val date = LocalDate.parse(dateString)
+    val date = LocalDate.now()
+    val pager = androidx.compose.foundation.pager.rememberPagerState(initialPage = color, pageCount = { PaperColors.size })
+    LaunchedEffect(pager.settledPage) { color = pager.settledPage }
     val paperColor by animateColorAsState(PaperColors[color], tween(400), label = "paper tint")
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val dismissAnimated = rememberAnimatedSheetDismiss(sheetState, onDismiss)
@@ -73,59 +72,28 @@ fun WriteSheet(onDismiss: () -> Unit, onSave: (Memory, () -> Unit) -> Unit) {
             Spacer(Modifier.height(8.dp))
             Text("Non deve essere speciale per gli altri. Solo per te.", fontSize = 13.sp, lineHeight = 21.sp, color = Muted)
             Spacer(Modifier.height(22.dp))
-            Column(Modifier.fillMaxWidth().joyUnfold(Unit).clip(RoundedCornerShape(8.dp, 8.dp, 28.dp, 8.dp))
-                .background(paperColor).padding(22.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(date.pretty(), color = Ink.copy(alpha = .55f), fontSize = 11.sp, modifier = Modifier.weight(1f))
-                    Icon(Icons.Outlined.Edit, null, Modifier.size(15.dp), Ink.copy(alpha = .4f))
+            androidx.compose.foundation.pager.HorizontalPager(state = pager, pageSpacing = 12.dp,
+                modifier = Modifier.fillMaxWidth(), userScrollEnabled = !saving) { page ->
+                Column(Modifier.fillMaxWidth().joyUnfold(Unit).clip(RoundedCornerShape(8.dp, 8.dp, 28.dp, 8.dp))
+                    .background(PaperColors[page]).padding(22.dp)) {
+                    Text(date.year.toString(), color = Ink.copy(alpha = .6f), fontSize = 11.sp)
+                    Spacer(Modifier.height(18.dp))
+                    BasicTextField(text, { if (it.length <= 2000) text = it }, Modifier.fillMaxWidth().heightIn(min = 160.dp), enabled = !saving,
+                        textStyle = DisplayStyle.copy(fontSize = 23.sp, lineHeight = 33.sp), cursorBrush = SolidColor(Forest),
+                        decorationBox = { inner -> Box { if (text.isEmpty()) Text("Oggi è stato bello quando…", style = DisplayStyle.copy(fontSize = 23.sp, lineHeight = 33.sp, color = Ink.copy(alpha = .5f))); inner() } })
+                    Text("${text.length} / 2000", Modifier.fillMaxWidth(), textAlign = TextAlign.End, fontSize = 10.sp, color = Ink.copy(alpha = .6f))
                 }
-                Spacer(Modifier.height(18.dp))
-                BasicTextField(text, { if (it.length <= 2000) text = it }, Modifier.fillMaxWidth().heightIn(min = 160.dp), enabled = !saving,
-                    textStyle = DisplayStyle.copy(fontSize = 23.sp, lineHeight = 33.sp, letterSpacing = (-.3).sp),
-                    cursorBrush = SolidColor(Forest), decorationBox = { inner ->
-                        Box { if (text.isEmpty()) Text("Oggi è stato bello quando…", style = DisplayStyle.copy(fontSize = 23.sp, lineHeight = 33.sp, color = Ink.copy(alpha = .36f))); inner() }
-                    })
-                Spacer(Modifier.height(12.dp))
-                Text("${text.length} / 2000", Modifier.fillMaxWidth(), textAlign = TextAlign.End, fontSize = 10.sp, color = Ink.copy(alpha = .4f))
             }
-            Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.AutoAwesome, null, Modifier.size(15.dp), Gold)
-                Spacer(Modifier.width(7.dp))
-                AnimatedContent(prompt, Modifier.weight(1f), transitionSpec = { fadeIn(tween(250)) togetherWith fadeOut(tween(130)) }, label = "a fresh inspiration") {
-                    Text(prompts[it], fontSize = 11.sp, lineHeight = 17.sp, color = Muted)
-                }
-                IconButton({ prompt = (prompt + 1) % prompts.size }, Modifier.size(38.dp)) { Icon(Icons.Outlined.Refresh, "Un’altra ispirazione", Modifier.size(18.dp), Gold) }
-            }
-            Eyebrow("IL COLORE DEL TUO MOMENTO")
-            Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Spacer(Modifier.height(14.dp))
+            Text("${listOf("Miele", "Salvia", "Pesca", "Lavanda", "Cielo")[pager.currentPage]} · Scorri per cambiare colore", Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = Muted, fontSize = 11.sp)
+            Row(Modifier.fillMaxWidth().padding(vertical = 14.dp), horizontalArrangement = Arrangement.Center) {
                 PaperColors.forEachIndexed { index, paper ->
-                    val scale by animateFloatAsState(if (color == index) 1.13f else 1f, spring(.5f, 400f), label = "paper swatch")
-                    Box(Modifier.size(44.dp).graphicsLayer { scaleX = scale; scaleY = scale }.clip(CircleShape).background(paper)
-                        .border(if (color == index) 2.dp else 1.dp, if (color == index) Forest else Ink.copy(alpha = .08f), CircleShape)
-                        .semantics { contentDescription = "Carta ${listOf("miele", "salvia", "pesca", "lavanda", "cielo")[index]}" }
-                        .selectable(color == index, role = Role.RadioButton) { color = index }, contentAlignment = Alignment.Center) {
-                        androidx.compose.animation.AnimatedVisibility(color == index, enter = scaleIn(spring(.5f)) + fadeIn(), exit = scaleOut() + fadeOut()) {
-                            Icon(Icons.Outlined.Check, null, Modifier.size(19.dp), Forest)
-                        }
-                    }
+                    Box(Modifier.padding(horizontal = 4.dp).size(if (pager.currentPage == index) 9.dp else 6.dp).clip(CircleShape).background(if (pager.currentPage == index) Forest else Muted.copy(alpha = .45f)))
                 }
-            }
-            Spacer(Modifier.height(21.dp))
-            Eyebrow("A COSA ASSOMIGLIA?")
-            Row(Modifier.horizontalScroll(rememberScrollState()).padding(top = 5.dp), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                Categories.forEach { item -> FilterChip(category == item, { category = item }, { Text(item, fontSize = 12.sp) }, shape = CircleShape) }
-            }
-            Row(Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 15.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.CalendarToday, null, Modifier.size(16.dp), Muted)
-                TextButton({
-                    DatePickerDialog(context, { _, y, m, d -> dateString = LocalDate.of(y, m + 1, d).toString() }, date.year, date.monthValue - 1, date.dayOfMonth)
-                        .apply { datePicker.maxDate = System.currentTimeMillis() }.show()
-                }) { Text(if (date == LocalDate.now()) "Oggi · ${date.shortDate()}" else date.pretty(), color = Muted, fontSize = 12.sp); Icon(Icons.Outlined.ExpandMore, null, Modifier.size(16.dp)) }
             }
             PrimaryButton(if (saving) "Sto custodendo il tuo momento…" else "Metti nel barattolo", Icons.Outlined.Add, text.isNotBlank() && !saving) {
                 saving = true
-                onSave(Memory(text = text.trim(), date = date, category = category, color = color)) { saving = false }
+                onSave(Memory(text = text.trim(), date = date, color = pager.settledPage)) { saving = false }
             }
             Spacer(Modifier.height(10.dp))
             Text("Solo tuo. Al sicuro nel tuo barattolo.", Modifier.fillMaxWidth(), color = Muted, fontSize = 10.sp, textAlign = TextAlign.Center)
@@ -156,12 +124,12 @@ fun MemorySheet(memory: Memory, random: Boolean, onDismiss: () -> Unit, onFavori
                 Spacer(Modifier.height(25.dp))
             }
             Column(Modifier.fillMaxWidth().joyUnfold(memory.id).clip(RoundedCornerShape(8.dp, 8.dp, 30.dp, 8.dp)).background(PaperColors[memory.color]).padding(26.dp)) {
-                Eyebrow(memory.date.pretty(), Ink.copy(alpha = .6f))
+                Eyebrow(memory.date.year.toString(), Ink.copy(alpha = .6f))
                 Spacer(Modifier.height(20.dp))
                 Text(memory.text, style = DisplayStyle.copy(fontSize = 26.sp, lineHeight = 37.sp, letterSpacing = (-.4).sp))
                 Spacer(Modifier.height(25.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(memory.category, color = Ink.copy(alpha = .55f), fontSize = 12.sp, modifier = Modifier.weight(1f))
+                    Spacer(Modifier.weight(1f))
                     Text("✧", fontSize = 25.sp, color = Gold)
                 }
             }
@@ -201,8 +169,8 @@ fun YearSheet(year: Int, memories: List<Memory>, onDismiss: () -> Unit, onOpen: 
             Text(if (current) "Quanta bellezza, fin qui." else "C’era tanto bello, in quei giorni.", style = DisplayStyle.copy(fontSize = 29.sp, lineHeight = 36.sp))
             Spacer(Modifier.height(20.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                listOf("${notes.size}" to "momenti custoditi", "$days" to "giorni da ricordare").forEach { (n, label) ->
-                    Column(Modifier.weight(1f).joyEntrance(1).clip(RoundedCornerShape(20.dp)).background(Color(0xFFE9EDDF)).padding(20.dp)) {
+                listOf("${notes.size}" to "momenti custoditi").forEach { (n, label) ->
+                    Column(Modifier.weight(1f).joyEntrance(1).clip(RoundedCornerShape(20.dp)).background(SoftSurface).padding(20.dp)) {
                         AnimatedCount(n.toInt(), style = DisplayStyle.copy(fontSize = 34.sp, color = Forest)); Text(label, color = Muted, fontSize = 11.sp)
                     }
                 }

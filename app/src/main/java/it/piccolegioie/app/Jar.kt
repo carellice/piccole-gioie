@@ -79,7 +79,7 @@ fun HappinessJar(count: Int, modifier: Modifier = Modifier, fishSignal: Int = 0,
                                 val base = PaperColors[i % 5]
                                 drawRoundRect(Color(0xFF5D6548).copy(alpha = .1f), Offset(x - 25, y - 14), Size(55f, 36f), CornerRadius(3f))
                                 drawRoundRect(Brush.verticalGradient(listOf(base, base.copy(alpha = .8f)), y - 20, y + 15), Offset(x - 28, y - 19), Size(55f, 34f), CornerRadius(2f))
-                                drawLine(Color.White.copy(alpha = .65f), Offset(x - 26, y - 17), Offset(x + 25, y - 17), 1f)
+                                drawLine(SoftSurface.copy(alpha = .65f), Offset(x - 26, y - 17), Offset(x + 25, y - 17), 1f)
                                 drawPath(Path().apply { moveTo(x - 28, y - 19); lineTo(x, y + 2); lineTo(x + 27, y - 19) }, Ink.copy(alpha = .12f), style = Stroke(.8f))
                             }
                         }

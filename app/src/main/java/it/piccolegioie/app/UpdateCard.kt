@@ -29,7 +29,7 @@ fun AppUpdateCard(vm: AppUpdateViewModel = viewModel()) {
         Eyebrow("PICCOLE NOVITÀ")
         Spacer(Modifier.height(12.dp))
         Column(Modifier.fillMaxWidth().animateContentSize().clip(RoundedCornerShape(22.dp))
-            .background(Color.White.copy(alpha = .65f)).border(1.dp, Line, RoundedCornerShape(22.dp)).padding(20.dp)) {
+            .background(SoftSurface.copy(alpha = .65f)).border(1.dp, Line, RoundedCornerShape(22.dp)).padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Outlined.AutoAwesome, null, Modifier.size(25.dp), Gold)
                 Spacer(Modifier.width(13.dp))

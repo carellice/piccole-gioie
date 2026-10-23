@@ -50,7 +50,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
     val scope = rememberCoroutineScope()
     var finishing by remember { mutableStateOf(false) }
     val current = pager.currentPage
-    val background by animateColorAsState(listOf(Cream, Color(0xFFF3F5EC), Color(0xFFFAF3E9))[current], tween(650), label = "welcome light")
+    val background by animateColorAsState(listOf(Cream, SoftSurface, Cream)[current], tween(650), label = "welcome light")
     val finish: () -> Unit = { if (!finishing) { finishing = true; onFinished() } }
     BackHandler(current > 0 && !finishing) {
         scope.launch { pager.animateScrollToPage((current - 1).coerceAtLeast(0), animationSpec = tween(500, easing = FastOutSlowInEasing)) }

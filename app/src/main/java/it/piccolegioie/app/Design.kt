@@ -1,5 +1,6 @@
 package it.piccolegioie.app
 
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,6 +10,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Favorite
@@ -28,18 +31,23 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-val Cream = Color(0xFFF9F6EF)
-val Forest = Color(0xFF314F43)
-val Ink = Color(0xFF303D34)
-val Muted = Color(0xFF7D8176)
-val Gold = Color(0xFFAF7D43)
-val Line = Color(0xFFE7E4D9)
-val PaperColors = listOf(Color(0xFFF2DDAC), Color(0xFFDFE7D7), Color(0xFFF1D8CE), Color(0xFFE1DCEE), Color(0xFFD6E5E7))
+private data class JoyPalette(val cream: Color, val forest: Color, val ink: Color, val muted: Color, val gold: Color, val line: Color, val surface: Color, val papers: List<Color>)
+private val lightPalette = JoyPalette(Color(0xFFF9F6EF), Color(0xFF314F43), Color(0xFF303D34), Color(0xFF7D8176), Color(0xFFAF7D43), Color(0xFFE7E4D9), Color(0xFFE8ECDF), listOf(Color(0xFFF2DDAC), Color(0xFFDFE7D7), Color(0xFFF1D8CE), Color(0xFFE1DCEE), Color(0xFFD6E5E7)))
+private val darkPalette = JoyPalette(Color(0xFF191F1B), Color(0xFFB7D4BC), Color(0xFFEAE8DC), Color(0xFFB0B6AA), Color(0xFFE1B878), Color(0xFF495247), Color(0xFF2D372E), listOf(Color(0xFF55472F), Color(0xFF354A38), Color(0xFF563D36), Color(0xFF484055), Color(0xFF304A50)))
+private var activePalette by androidx.compose.runtime.mutableStateOf(lightPalette)
+val Cream get() = activePalette.cream
+val Forest get() = activePalette.forest
+val Ink get() = activePalette.ink
+val Muted get() = activePalette.muted
+val Gold get() = activePalette.gold
+val Line get() = activePalette.line
+val SoftSurface get() = activePalette.surface
+val PaperColors get() = activePalette.papers
 val Categories = listOf("Piccole gioie", "Gratitudine", "Persone", "Traguardi")
 val Italian: Locale = Locale.ITALIAN
 fun LocalDate.pretty(): String = format(DateTimeFormatter.ofPattern("d MMMM yyyy", Italian))
 fun LocalDate.shortDate(): String = format(DateTimeFormatter.ofPattern("d MMM", Italian))
-val DisplayStyle = TextStyle(fontFamily = FontFamily.Serif, color = Ink, fontSize = 34.sp, lineHeight = 40.sp, letterSpacing = (-0.9).sp)
+val DisplayStyle get() = TextStyle(fontFamily = FontFamily.Serif, color = Ink, fontSize = 34.sp, lineHeight = 40.sp, letterSpacing = (-0.9).sp)
 
 /** Clearance at the end of a list, while its scrolling viewport continues behind the dock. */
 @Composable
@@ -48,12 +56,22 @@ fun floatingContentBottomPadding() = if (WindowInsets.ime.getBottom(LocalDensity
 
 @Composable
 fun JoyTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = lightColorScheme(
-        primary = Forest, onPrimary = Color.White, secondary = Gold,
-        background = Cream, onBackground = Ink, surface = Cream, onSurface = Ink,
-        surfaceVariant = Color(0xFFEFEEE5), onSurfaceVariant = Muted,
-        outline = Line, outlineVariant = Line, primaryContainer = Color(0xFFE5EBDF), onPrimaryContainer = Forest,
-        secondaryContainer = Color(0xFFE5EBDF), onSecondaryContainer = Forest, surfaceTint = Forest
+    val dark = androidx.compose.foundation.isSystemInDarkTheme()
+    val palette = if (dark) darkPalette else lightPalette
+    androidx.compose.runtime.SideEffect { activePalette = palette }
+    val activity = androidx.activity.compose.LocalActivity.current as? androidx.activity.ComponentActivity
+    androidx.compose.runtime.SideEffect {
+        activity?.enableEdgeToEdge(
+            statusBarStyle = if (dark) androidx.activity.SystemBarStyle.dark(0xFF191F1B.toInt()) else androidx.activity.SystemBarStyle.light(0xFFF9F6EF.toInt(), 0xFFF9F6EF.toInt()),
+            navigationBarStyle = if (dark) androidx.activity.SystemBarStyle.dark(0xFF191F1B.toInt()) else androidx.activity.SystemBarStyle.light(0xFFF9F6EF.toInt(), 0xFFF9F6EF.toInt()))
+    }
+    val base = if (dark) darkColorScheme() else lightColorScheme()
+    MaterialTheme(colorScheme = base.copy(
+        primary = palette.forest, onPrimary = palette.cream, secondary = palette.gold,
+        background = palette.cream, onBackground = palette.ink, surface = palette.cream, onSurface = palette.ink,
+        surfaceVariant = palette.surface, onSurfaceVariant = palette.muted,
+        outline = palette.line, outlineVariant = palette.line, primaryContainer = palette.surface, onPrimaryContainer = palette.forest,
+        secondaryContainer = palette.surface, onSecondaryContainer = palette.forest, surfaceTint = palette.forest
     ), typography = Typography(bodyLarge = TextStyle(fontSize = 16.sp, lineHeight = 25.sp),
         bodyMedium = TextStyle(fontSize = 14.sp, lineHeight = 21.sp),
         labelLarge = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Medium)), content = content)
@@ -76,7 +94,7 @@ fun PrimaryButton(text: String, icon: ImageVector? = null, enabled: Boolean = tr
 
 @Composable
 fun RoundIcon(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier, tint: Color = Forest) {
-    IconButton(onClick, modifier.size(46.dp).background(Color.White.copy(alpha = .62f), CircleShape).border(1.dp, Line, CircleShape)) {
+    IconButton(onClick, modifier.size(46.dp).background(SoftSurface.copy(alpha = .62f), CircleShape).border(1.dp, Line, CircleShape)) {
         Icon(icon, label, Modifier.size(20.dp), tint)
     }
 }
@@ -87,7 +105,7 @@ fun PaperCard(memory: Memory, onClick: () -> Unit, modifier: Modifier = Modifier
     Column(modifier.joyPress(interaction).clip(RoundedCornerShape(20.dp)).background(PaperColors[memory.color])
         .clickable(interactionSource = interaction, indication = null, onClick = onClick).padding(20.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Eyebrow(memory.date.shortDate(), Ink.copy(alpha = .6f), Modifier.weight(1f))
+            Eyebrow(memory.date.year.toString(), Ink.copy(alpha = .6f), Modifier.weight(1f))
             if (memory.favorite) Icon(Icons.Outlined.Favorite, "Ricordo del cuore", Modifier.size(15.dp), Gold)
             else Text("✧", color = Ink.copy(alpha = .5f), fontSize = 17.sp)
         }
@@ -95,7 +113,7 @@ fun PaperCard(memory: Memory, onClick: () -> Unit, modifier: Modifier = Modifier
         Text(memory.text, style = DisplayStyle.copy(fontSize = if (compact) 18.sp else 21.sp, lineHeight = 28.sp, letterSpacing = (-.3).sp),
             maxLines = if (compact) 3 else 5, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
         Spacer(Modifier.height(16.dp))
-        Text(memory.category, color = Ink.copy(alpha = .6f), fontSize = 11.sp)
+
     }
 }
 

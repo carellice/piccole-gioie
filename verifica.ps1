@@ -5,6 +5,7 @@ $projectDirectory = $PSScriptRoot
 $temporaryDrive = $null
 $previousLocation = Get-Location
 try {
+    if ($projectDirectory -match '[^\x00-\x7F]') {
     foreach ($letter in @('P','Q','R','S','T','U','V','W','X','Y','Z')) {
         if (-not (Test-Path "${letter}:\")) {
             & subst.exe "${letter}:" $projectDirectory
@@ -13,6 +14,7 @@ try {
     }
     if (-not $temporaryDrive) { throw 'Non trovo una lettera libera per il percorso di compilazione temporaneo.' }
     Set-Location "${temporaryDrive}\"
+    } else { Set-Location -LiteralPath $projectDirectory }
     if ($Release) {
         & .\gradlew.bat assembleRelease testReleaseUnitTest lintRelease --console=plain
     } else {

@@ -18,7 +18,9 @@ Un barattolo della felicità **nativo Android**, scritto in Kotlin e Jetpack Com
 
 ## Dentro il barattolo
 
-- Momenti felici e gratitudine, con categoria, colore e data personalizzabili.
+- Scrittura minimale: testo e foglietti colorati da sfogliare con un carosello.
+- Solo l’anno nei ricordi e nel riepilogo, con conteggio dei momenti custoditi.
+- Tema chiaro e scuro automatico, seguendo il dispositivo.
 - Un ricordo a sorpresa toccando il barattolo o «Ho bisogno di un sorriso».
 - Raccolta per mese e anno, ricerca, preferiti e riepilogo annuale.
 - Promemoria quotidiano con orario personalizzabile.

@@ -37,8 +37,8 @@ fun CozyDock(selected: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifi
     LaunchedEffect(selected) { ripple.snapTo(0f); ripple.animateTo(1f, tween(750)) }
     Box(modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 26.dp).padding(top = 12.dp, bottom = 18.dp).joyEntrance(3)) {
         BoxWithConstraints(Modifier.fillMaxWidth().shadow(18.dp, RoundedCornerShape(32.dp), ambientColor = Forest.copy(alpha = .15f), spotColor = Forest.copy(alpha = .15f))
-            .background(Brush.verticalGradient(listOf(Color(0xFFFFFEF8), Color(0xFFF0F0E4))), RoundedCornerShape(32.dp))
-            .border(1.dp, Color.White, RoundedCornerShape(32.dp)).height(86.dp).padding(horizontal = 10.dp).selectableGroup()) {
+            .background(Brush.verticalGradient(listOf(Cream, SoftSurface)), RoundedCornerShape(32.dp))
+            .border(1.dp, Line, RoundedCornerShape(32.dp)).height(86.dp).padding(horizontal = 10.dp).selectableGroup()) {
             val slot = maxWidth / 3
             // One continuous moving object connects the three destinations.
             Box(Modifier.offset(x = slot * position.value + (slot - 50.dp) / 2, y = 7.dp)
